@@ -45,6 +45,7 @@
 
 @interface XPButtonBarView ()
 
+@property (nonatomic, strong) UIView *buttonContainerView;
 @property (nonatomic, weak) UIButton *selectedButton;
 @property (nonatomic, strong) XPPopoverMenuView *menuView;
 
@@ -57,14 +58,14 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        self.backgroundColor = xp_colorWithRGB(254.0, 251.0, 255.0);
+        [self configureUserInterface];
     }
     return self;
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
-    self.backgroundColor = xp_colorWithRGB(254.0, 251.0, 255.0);
+    [self configureUserInterface];
 }
 
 #pragma mark - Actions
@@ -92,8 +93,8 @@
 
 - (void)reload {
     // remove old button.
-    [self removeConstraints:self.constraints];
-    [self.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [_buttonContainerView removeConstraints:_buttonContainerView.constraints];
+    [_buttonContainerView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     if (0 == _buttonItems.count) return;
     
     // re-add button.
@@ -108,7 +109,7 @@
         [button.titleLabel setFont:[UIFont systemFontOfSize:BUTTON_TEXT_FONT_SIZE]];
         [button setTag:idx]; // bind the index.
         [button addTarget:self action:@selector(buttonAction:) forControlEvents:UIControlEventTouchUpInside];
-        [self addSubview:button];
+        [_buttonContainerView addSubview:button];
         
         // AutoLayout
         [button setTranslatesAutoresizingMaskIntoConstraints:NO];
@@ -117,33 +118,33 @@
           [NSLayoutConstraint constraintWithItem:button
                                        attribute:NSLayoutAttributeLeft
                                        relatedBy:NSLayoutRelationEqual
-                                          toItem:self
+                                          toItem:_buttonContainerView
                                        attribute:(idx==0?NSLayoutAttributeLeft:NSLayoutAttributeRight)
                                       multiplier:(idx==0?1.0:widthMultiplier*idx)
                                         constant:0.0],
           [NSLayoutConstraint constraintWithItem:button
                                        attribute:NSLayoutAttributeTop
                                        relatedBy:NSLayoutRelationEqual
-                                          toItem:self
+                                          toItem:_buttonContainerView
                                        attribute:NSLayoutAttributeTop
                                       multiplier:1.0
                                         constant:0.0],
           [NSLayoutConstraint constraintWithItem:button
                                        attribute:NSLayoutAttributeWidth
                                        relatedBy:NSLayoutRelationEqual
-                                          toItem:self
+                                          toItem:_buttonContainerView
                                        attribute:NSLayoutAttributeWidth
                                       multiplier:widthMultiplier
                                         constant:0],
           [NSLayoutConstraint constraintWithItem:button
                                        attribute:NSLayoutAttributeHeight
                                        relatedBy:NSLayoutRelationEqual
-                                          toItem:self
+                                          toItem:_buttonContainerView
                                        attribute:NSLayoutAttributeHeight
                                       multiplier:1.0
                                         constant:0.0]
           ];
-        [self addConstraints:constraints];
+        [_buttonContainerView addConstraints:constraints];
     }];
 }
 
@@ -151,6 +152,25 @@
     XPMenuItem *item = _menuView.menuItems[index];
     item.subitems = items;
     [_menuView reloadRightPanelData];
+}
+
+#pragma mark - Private
+
+- (void)configureUserInterface {
+    self.backgroundColor = xp_colorWithRGB(254.0, 251.0, 255.0);
+    _buttonContainerView = [[UIView alloc] init];
+    _buttonContainerView.backgroundColor = [UIColor clearColor];
+    _buttonContainerView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:_buttonContainerView];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[_buttonContainerView]|" options:NSLayoutFormatDirectionLeadingToTrailing metrics:nil views:NSDictionaryOfVariableBindings(_buttonContainerView)]];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:|[_buttonContainerView]|" options:NSLayoutFormatDirectionLeadingToTrailing metrics:nil views:NSDictionaryOfVariableBindings(_buttonContainerView)]];
+    
+    UIView *separatorLine = [[UIView alloc] init];
+    separatorLine.backgroundColor = xp_colorWithRGB(234.0, 231.0, 234.0);
+    separatorLine.translatesAutoresizingMaskIntoConstraints = NO;
+    [self addSubview:separatorLine];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"H:|[separatorLine]|" options:NSLayoutFormatDirectionLeadingToTrailing metrics:nil views:NSDictionaryOfVariableBindings(separatorLine)]];
+    [self addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[separatorLine(==0.5)]|" options:NSLayoutFormatDirectionLeadingToTrailing metrics:nil views:NSDictionaryOfVariableBindings(separatorLine)]];
 }
 
 #pragma mark - setter & getter
